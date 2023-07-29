@@ -24,3 +24,4 @@ much time each player has to make their move.
 ## Code Structure
 Everything is contained in a single HTML `index.html` file. It contains the pure Javscript and Styling.  
 It's really not that big of a project. I just wanted to play some card games with my friends and needed a timer.
+I spent more time on this README than on the actual project.
