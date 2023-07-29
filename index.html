@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Timer</title>
+        <meta name="description" content="Basic Web Timer for Games">
+
+        <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Lora">
+    </head>
+    
+    <body>
+        <div id="timer-text"></div>
+        <div id="central-text">Click to start Timer</div>
+    </body>
+
+    <style>
+
+        html {
+            font-family: 'Lora', serif;
+            text-align: center;
+            background-color: #000000;
+            color: #ffffff;
+
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+
+            transition: background-color 1s;
+        }
+
+        #timer-text, #central-text {
+            position: absolute;
+            font-size: 20vw;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #central-text {
+            font-size: 10vw;
+            width: 80%;
+        }
+        
+    </style>
+
+    <script>
+
+        let maxSeconds = 10
+        let lastPressTime = null
+        let currSeconds = -1
+        let stopped = false
+        let audioContext = new AudioContext()
+        let audioEnabled = true
+
+        const timerTextElement = document.getElementById('timer-text')
+        const centralTextElement = document.getElementById('central-text')
+
+        function secondsToColor(seconds) {
+            if (seconds > 5)
+                return "#00d018"
+            if (seconds > 3)
+                return "#f29100"
+            if (seconds > 0)
+                return "red"
+            return "black"
+        }
+
+        function beep(frequency=440, duration=0.1) {
+            if (!audioEnabled)
+                return
+            
+            let oscillator = audioContext.createOscillator()
+            oscillator.type = 'sine'
+            oscillator.frequency.value = frequency
+            oscillator.connect(audioContext.destination)
+            oscillator.start()
+            oscillator.stop(audioContext.currentTime + duration)
+        }
+
+        async function beepError() {
+            beep(400, 0.2)
+        }
+
+        let urlParams = new URLSearchParams(window.location.search)
+        if (urlParams.has('seconds')) {
+            if (urlParams.get('seconds') > 0)
+                maxSeconds = urlParams.get('seconds')
+        }
+
+        if (urlParams.has('silent')) {
+            audioEnabled = false
+        }
+
+        function getSecondsLeft() {
+            if (stopped)
+                return 0
+            
+            let now = Date.now()
+            let secondsLeft = maxSeconds - Math.floor((now - lastPressTime) / 1000)
+            if (secondsLeft < 0)
+                secondsLeft = 0
+            return secondsLeft
+        }
+        
+        function updateTimerText(seconds) {
+            document.getElementById('timer-text').textContent = seconds + 's'
+        }
+
+        function loop() {
+            if (lastPressTime) {
+                let secondsLeft = getSecondsLeft()
+                if (secondsLeft != currSeconds) {
+                    currSeconds = secondsLeft
+                    updateTimerText(secondsLeft)
+    
+                    if (secondsLeft == 0) {
+                        stopped = true
+                        beep(1000, 0.5)
+                    } else if (secondsLeft <= 3) {
+                        beep(550)
+                    }
+                }
+                document.body.style.backgroundColor = secondsToColor(secondsLeft)
+            }
+
+
+            window.requestAnimationFrame(loop)
+        }
+
+        function resetTimer() {
+            if (stopped) {
+                beepError()
+                return
+            }
+
+            if (!lastPressTime) {
+                centralTextElement.style.display = 'none'
+            }
+
+            lastPressTime = Date.now()
+            beep(440)
+        }
+
+        window.addEventListener('click', resetTimer)
+
+        loop()
+    
+    </script>
+
+</html>
